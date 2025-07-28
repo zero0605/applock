@@ -25,18 +25,13 @@ jobs:
       
     - name: setup gradle wrapper
       run: |
-        mkdir -p gradle/wrapper
-        echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
-        echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-        echo "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.2-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
-        echo "networkTimeout=10000" >> gradle/wrapper/gradle-wrapper.properties
-        echo "validateDistributionUrl=true" >> gradle/wrapper/gradle-wrapper.properties
-        echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
-        echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+        # install gradle first
+        wget https://services.gradle.org/distributions/gradle-8.2-bin.zip
+        unzip -q gradle-8.2-bin.zip
+        export PATH=$PATH:$PWD/gradle-8.2/bin
 
-    - name: download gradle wrapper jar
-      run: |
-        curl -L https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+        # generate wrapper
+        gradle wrapper --gradle-version 8.2
 
     - name: cache gradle
       uses: actions/cache@v3
