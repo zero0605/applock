@@ -70,7 +70,14 @@ fun MainScreen() {
                     text = "trang thai:",
                     style = MaterialTheme.typography.titleMedium
                 )
-                Text("shizuku: $shizukuStatus")
+                Text("status: $shizukuStatus")
+
+                // detailed debug info
+                Text(
+                    text = ShizukuUtils.getDetailedStatus(),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
         }
 
