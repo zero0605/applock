@@ -4,12 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.applock.vl.data.AppInfo
 import com.applock.vl.ui.theme.AppLockTheme
+import com.applock.vl.utils.AppUtils
+import com.applock.vl.utils.PrefsUtils
 import com.applock.vl.utils.ShizukuUtils
 import kotlinx.coroutines.launch
 
@@ -153,12 +159,37 @@ fun MainScreenContent(
 
 @Composable
 fun AppListScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var installedApps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
+    var lockedApps by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                installedApps = AppUtils.getInstalledApps(context)
+                if (installedApps.isEmpty()) {
+                    // fallback to popular apps if can't get installed apps
+                    installedApps = AppUtils.getPopularApps()
+                }
+                lockedApps = PrefsUtils.getLockedApps(context)
+            } catch (e: Exception) {
+                installedApps = AppUtils.getPopularApps()
+                lockedApps = PrefsUtils.getLockedApps(context)
+            }
+            isLoading = false
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // header
         Card {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -169,31 +200,99 @@ fun AppListScreen(onBack: () -> Unit) {
                     style = MaterialTheme.typography.headlineMedium
                 )
                 Text(
-                    text = "basic mode - khong can shizuku",
+                    text = "${lockedApps.size} app dang bi khoa",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
 
-        Card {
-            Column(
-                modifier = Modifier.padding(16.dp),
+        // app list
+        if (isLoading) {
+            Card {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("dang tai danh sach app...")
+                }
+            }
+        } else {
+            LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("📱 chrome")
-                Text("📱 facebook")
-                Text("📱 instagram")
-                Text("📱 tiktok")
-                Text("...")
-                Text("(danh sach app se duoc implement sau)")
+                items(installedApps) { app ->
+                    AppItem(
+                        app = app,
+                        isLocked = lockedApps.contains(app.packageName),
+                        onToggle = {
+                            scope.launch {
+                                if (lockedApps.contains(app.packageName)) {
+                                    PrefsUtils.removeLockedApp(context, app.packageName)
+                                } else {
+                                    PrefsUtils.addLockedApp(context, app.packageName)
+                                }
+                                lockedApps = PrefsUtils.getLockedApps(context)
+                            }
+                        }
+                    )
+                }
             }
         }
 
+        // back button
         Button(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("quay lai")
+        }
+    }
+}
+
+@Composable
+fun AppItem(
+    app: AppInfo,
+    isLocked: Boolean,
+    onToggle: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = isLocked,
+                onCheckedChange = { onToggle() }
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = app.name,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = app.packageName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = androidx.compose.ui.graphics.Color.Gray
+                )
+            }
+
+            if (isLocked) {
+                Text(
+                    text = "🔒",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
         }
     }
 }
