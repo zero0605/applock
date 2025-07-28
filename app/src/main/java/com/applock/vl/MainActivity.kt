@@ -30,6 +30,7 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val scope = rememberCoroutineScope()
     var shizukuStatus by remember { mutableStateOf("checking...") }
+    var currentScreen by remember { mutableStateOf("main") }
 
     LaunchedEffect(Unit) {
         scope.launch {
@@ -37,6 +38,37 @@ fun MainScreen() {
         }
     }
 
+    when (currentScreen) {
+        "main" -> MainScreenContent(
+            shizukuStatus = shizukuStatus,
+            onRefreshStatus = {
+                scope.launch {
+                    shizukuStatus = ShizukuUtils.getShizukuStatus()
+                }
+            },
+            onRequestPermission = {
+                scope.launch {
+                    ShizukuUtils.requestShizukuPermission()
+                    shizukuStatus = ShizukuUtils.getShizukuStatus()
+                }
+            },
+            onContinueWithoutShizuku = {
+                currentScreen = "applist"
+            }
+        )
+        "applist" -> AppListScreen(
+            onBack = { currentScreen = "main" }
+        )
+    }
+}
+
+@Composable
+fun MainScreenContent(
+    shizukuStatus: String,
+    onRefreshStatus: () -> Unit,
+    onRequestPermission: () -> Unit,
+    onContinueWithoutShizuku: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -54,7 +86,7 @@ fun MainScreen() {
                     style = MaterialTheme.typography.headlineMedium
                 )
                 Text(
-                    text = "app khoa ung dung bang shizuku",
+                    text = "app khoa ung dung",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -67,44 +99,101 @@ fun MainScreen() {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "trang thai:",
+                    text = "shizuku status:",
                     style = MaterialTheme.typography.titleMedium
                 )
-                Text("status: $shizukuStatus")
+                Text("$shizukuStatus")
 
-                // detailed debug info
-                Text(
-                    text = ShizukuUtils.getDetailedStatus(),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                if (shizukuStatus.contains("ok")) {
+                    Text(
+                        text = "✅ shizuku ready!",
+                        color = androidx.compose.ui.graphics.Color.Green
+                    )
+                } else {
+                    Text(
+                        text = "⚠️ shizuku issue - co the dung basic mode",
+                        color = androidx.compose.ui.graphics.Color.Orange
+                    )
+                }
             }
         }
 
         // actions
-        Button(
-            onClick = {
-                scope.launch {
-                    if (!ShizukuUtils.hasShizukuPermission()) {
-                        ShizukuUtils.requestShizukuPermission()
-                    }
-                    shizukuStatus = ShizukuUtils.getShizukuStatus()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("cap quyen shizuku")
+        if (shizukuStatus.contains("ok")) {
+            Button(
+                onClick = onContinueWithoutShizuku,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("tiep tuc voi shizuku")
+            }
+        } else {
+            Button(
+                onClick = onRequestPermission,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("cap quyen shizuku")
+            }
+
+            Button(
+                onClick = onRefreshStatus,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("refresh status")
+            }
+
+            Button(
+                onClick = onContinueWithoutShizuku,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("tiep tuc khong can shizuku")
+            }
+        }
+    }
+}
+
+@Composable
+fun AppListScreen(onBack: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Card {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "chon app can khoa",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Text(
+                    text = "basic mode - khong can shizuku",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
+        Card {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("📱 chrome")
+                Text("📱 facebook")
+                Text("📱 instagram")
+                Text("📱 tiktok")
+                Text("...")
+                Text("(danh sach app se duoc implement sau)")
+            }
         }
 
         Button(
-            onClick = {
-                scope.launch {
-                    shizukuStatus = ShizukuUtils.getShizukuStatus()
-                }
-            },
+            onClick = onBack,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("refresh status")
+            Text("quay lai")
         }
     }
 }
