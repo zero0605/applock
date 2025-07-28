@@ -70,12 +70,12 @@ fun MainScreen() {
                 currentScreen = "settings"
             },
             onStartService = {
-                val intent = Intent(this@MainActivity, AppMonitorService::class.java)
-                this@MainActivity.startForegroundService(intent)
+                val serviceIntent = Intent(this@MainActivity, AppMonitorService::class.java)
+                startForegroundService(serviceIntent)
             },
             onStopService = {
-                val intent = Intent(this@MainActivity, AppMonitorService::class.java)
-                this@MainActivity.stopService(intent)
+                val serviceIntent = Intent(this@MainActivity, AppMonitorService::class.java)
+                stopService(serviceIntent)
             }
         )
         "applist" -> AppListScreen(

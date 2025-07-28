@@ -118,21 +118,16 @@ class AppMonitorService : Service() {
                 currentTime
             )
             
-            var lastEvent: UsageEvents.Event? = null
             val event = UsageEvents.Event()
-            
+            var latestPackage = ""
             while (events.hasNextEvent()) {
                 events.getNextEvent(event)
                 if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                    lastEvent = UsageEvents.Event().apply {
-                        packageName = event.packageName
-                        timeStamp = event.timeStamp
-                        eventType = event.eventType
-                    }
+                    latestPackage = event.packageName
                 }
             }
             
-            lastEvent?.packageName ?: ""
+            latestPackage
         } catch (e: Exception) {
             ""
         }
