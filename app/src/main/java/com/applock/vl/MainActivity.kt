@@ -15,8 +15,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.applock.vl.data.AppInfo
+import com.applock.vl.service.AppMonitorService
 import com.applock.vl.ui.theme.AppLockTheme
 import com.applock.vl.utils.AppUtils
+import com.applock.vl.utils.PermissionUtils
 import com.applock.vl.utils.PrefsUtils
 import com.applock.vl.utils.ShizukuUtils
 import kotlinx.coroutines.launch
@@ -65,6 +67,14 @@ fun MainScreen() {
             },
             onSettings = {
                 currentScreen = "settings"
+            },
+            onStartService = {
+                val intent = Intent(this@MainActivity, AppMonitorService::class.java)
+                startForegroundService(intent)
+            },
+            onStopService = {
+                val intent = Intent(this@MainActivity, AppMonitorService::class.java)
+                stopService(intent)
             }
         )
         "applist" -> AppListScreen(
@@ -82,7 +92,9 @@ fun MainScreenContent(
     onRefreshStatus: () -> Unit,
     onRequestPermission: () -> Unit,
     onContinueWithoutShizuku: () -> Unit,
-    onSettings: () -> Unit
+    onSettings: () -> Unit,
+    onStartService: () -> Unit,
+    onStopService: () -> Unit
 ) {
     val context = LocalContext.current
     val lockedAppsCount = PrefsUtils.getLockedApps(context).size
@@ -170,6 +182,62 @@ fun MainScreenContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("cai dat")
+            }
+        }
+
+        // service controls
+        if (lockedAppsCount > 0) {
+            Card {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "app monitoring:",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = onStartService,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("bat dau bao ve")
+                        }
+
+                        OutlinedButton(
+                            onClick = onStopService,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("dung bao ve")
+                        }
+                    }
+
+                    Text(
+                        text = "status: ${PermissionUtils.getPermissionStatus(context)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.ui.graphics.Color.Gray
+                    )
+
+                    if (!PermissionUtils.hasUsageStatsPermission(context) ||
+                        !PermissionUtils.hasOverlayPermission(context)) {
+                        Button(
+                            onClick = {
+                                if (!PermissionUtils.hasUsageStatsPermission(context)) {
+                                    PermissionUtils.requestUsageStatsPermission(context)
+                                } else if (!PermissionUtils.hasOverlayPermission(context)) {
+                                    PermissionUtils.requestOverlayPermission(context)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("cap quyen can thiet")
+                        }
+                    }
+                }
             }
         }
     }
