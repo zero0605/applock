@@ -89,4 +89,7 @@ fastlane/readme.md
 *.hprof
 
 # temp files
-download-gradle-wrapper.ps1
+*.bat
+*.ps1
+*.zip
+capacitor-hot-reload-main/
