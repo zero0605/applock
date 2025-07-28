@@ -124,7 +124,11 @@ class AppMonitorService : Service() {
             while (events.hasNextEvent()) {
                 events.getNextEvent(event)
                 if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                    lastEvent = UsageEvents.Event(event)
+                    lastEvent = UsageEvents.Event().apply {
+                        packageName = event.packageName
+                        timeStamp = event.timeStamp
+                        eventType = event.eventType
+                    }
                 }
             }
             

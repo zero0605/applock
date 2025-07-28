@@ -1,5 +1,6 @@
 package com.applock.vl
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -70,11 +71,11 @@ fun MainScreen() {
             },
             onStartService = {
                 val intent = Intent(this@MainActivity, AppMonitorService::class.java)
-                startForegroundService(intent)
+                this@MainActivity.startForegroundService(intent)
             },
             onStopService = {
                 val intent = Intent(this@MainActivity, AppMonitorService::class.java)
-                stopService(intent)
+                this@MainActivity.stopService(intent)
             }
         )
         "applist" -> AppListScreen(
