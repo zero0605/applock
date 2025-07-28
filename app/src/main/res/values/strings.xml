@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">applock vl</string>
+    <string name="auth_title">xac thuc di</string>
+    <string name="auth_subtitle">mo khoa app</string>
+    <string name="pin_hint">nhap pin</string>
+    <string name="wrong_pin">sai pin roi</string>
+    <string name="biometric_title">dung van tay</string>
+    <string name="biometric_subtitle">de mo khoa app</string>
+    <string name="biometric_negative">huy</string>
+    <string name="select_apps">chon app can khoa</string>
+    <string name="no_apps_selected">chua chon app nao</string>
+    <string name="shizuku_not_running">shizuku chua chay</string>
+    <string name="shizuku_no_permission">chua cap quyen shizuku</string>
+    <string name="usage_stats_permission">can quyen usage stats</string>
+    <string name="overlay_permission">can quyen overlay</string>
+</resources>
