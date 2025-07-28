@@ -112,7 +112,7 @@ fun MainScreenContent(
                 } else {
                     Text(
                         text = "⚠️ shizuku issue - co the dung basic mode",
-                        color = androidx.compose.ui.graphics.Color.Orange
+                        color = androidx.compose.ui.graphics.Color.Red
                     )
                 }
             }
