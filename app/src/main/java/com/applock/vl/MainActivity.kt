@@ -6,11 +6,13 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.applock.vl.data.AppInfo
 import com.applock.vl.ui.theme.AppLockTheme
@@ -60,9 +62,15 @@ fun MainScreen() {
             },
             onContinueWithoutShizuku = {
                 currentScreen = "applist"
+            },
+            onSettings = {
+                currentScreen = "settings"
             }
         )
         "applist" -> AppListScreen(
+            onBack = { currentScreen = "main" }
+        )
+        "settings" -> SettingsScreen(
             onBack = { currentScreen = "main" }
         )
     }
@@ -73,8 +81,11 @@ fun MainScreenContent(
     shizukuStatus: String,
     onRefreshStatus: () -> Unit,
     onRequestPermission: () -> Unit,
-    onContinueWithoutShizuku: () -> Unit
+    onContinueWithoutShizuku: () -> Unit,
+    onSettings: () -> Unit
 ) {
+    val context = LocalContext.current
+    val lockedAppsCount = PrefsUtils.getLockedApps(context).size
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -92,7 +103,7 @@ fun MainScreenContent(
                     style = MaterialTheme.typography.headlineMedium
                 )
                 Text(
-                    text = "app khoa ung dung",
+                    text = "app khoa ung dung - $lockedAppsCount app dang bi khoa",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -152,6 +163,13 @@ fun MainScreenContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("tiep tuc khong can shizuku")
+            }
+
+            OutlinedButton(
+                onClick = onSettings,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("cai dat")
             }
         }
     }
@@ -297,4 +315,120 @@ fun AppItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    var currentPin by remember { mutableStateOf(PrefsUtils.getPin(context)) }
+    var newPin by remember { mutableStateOf("") }
+    var showSuccess by remember { mutableStateOf(false) }
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // header
+        Card {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "cai dat",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Text(
+                    text = "thay doi pin va test auth",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
+        // pin settings
+        Card {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "thay doi pin:",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text("pin hien tai: $currentPin")
+
+                OutlinedTextField(
+                    value = newPin,
+                    onValueChange = { newPin = it },
+                    label = { Text("pin moi (4 so)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Button(
+                    onClick = {
+                        if (newPin.length == 4 && newPin.all { it.isDigit() }) {
+                            PrefsUtils.setPin(context, newPin)
+                            currentPin = newPin
+                            newPin = ""
+                            showSuccess = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = newPin.length == 4 && newPin.all { it.isDigit() }
+                ) {
+                    Text("luu pin moi")
+                }
+
+                if (showSuccess) {
+                    Text(
+                        text = "✅ da luu pin moi!",
+                        color = androidx.compose.ui.graphics.Color.Green
+                    )
+                }
+            }
+        }
+
+        // test auth
+        Card {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "test authentication:",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Button(
+                    onClick = {
+                        val intent = android.content.Intent(context, AuthActivity::class.java)
+                        intent.putExtra("package_name", "com.test.app")
+                        intent.putExtra("app_name", "Test App")
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("test auth screen")
+                }
+            }
+        }
+
+        // back button
+        Button(
+            onClick = onBack,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("quay lai")
+        }
+    }
+
+    LaunchedEffect(showSuccess) {
+        if (showSuccess) {
+            kotlinx.coroutines.delay(2000)
+            showSuccess = false
+        }
+    }
+}
