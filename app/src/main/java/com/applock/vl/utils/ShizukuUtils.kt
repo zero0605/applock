@@ -7,15 +7,20 @@ object ShizukuUtils {
     fun isShizukuRunning(): Boolean {
         return try {
             Shizuku.pingBinder()
+            true
         } catch (e: Exception) {
+            android.util.Log.e("ShizukuUtils", "pingBinder failed: ${e.message}")
             false
         }
     }
     
     fun hasShizukuPermission(): Boolean {
         return try {
-            Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
+            val result = Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
+            android.util.Log.d("ShizukuUtils", "permission check: $result")
+            result
         } catch (e: Exception) {
+            android.util.Log.e("ShizukuUtils", "permission check failed: ${e.message}")
             false
         }
     }
@@ -29,10 +34,14 @@ object ShizukuUtils {
     }
     
     fun getShizukuStatus(): String {
-        return when {
-            !isShizukuRunning() -> "shizuku chua chay"
-            !hasShizukuPermission() -> "chua cap quyen shizuku"
-            else -> "shizuku ok"
+        return try {
+            when {
+                !isShizukuRunning() -> "shizuku chua chay"
+                !hasShizukuPermission() -> "chua cap quyen shizuku"
+                else -> "shizuku ok"
+            }
+        } catch (e: Exception) {
+            "loi: ${e.message}"
         }
     }
 }
